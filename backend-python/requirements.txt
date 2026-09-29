@@ -1,0 +1,6 @@
+flask==3.0.0
+flask-cors==4.0.0
+Pillow
+numpy
+python-dotenv
+werkzeug==3.0.1

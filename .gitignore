@@ -1,0 +1,25 @@
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+venv/
+.env
+*.h5
+*.pkl
+*.model
+uploads/
+
+# Node
+node_modules/
+.env
+dist/
+build/
+
+# React
+frontend/node_modules/
+frontend/build/
+
+# System
+.DS_Store
+Thumbs.db
+*.log
