@@ -74,11 +74,6 @@ export default function Home() {
 
       {/* Features */}
       <section className="max-w-5xl mx-auto px-6 py-16">
-        <div className="text-center mb-10">
-          <h2 className="inline-block text-2xl sm:text-3xl font-extrabold text-white bg-black/50 backdrop-blur-md px-6 py-2.5 rounded-2xl border border-white/20 shadow-lg tracking-wide">
-            🌱 Why AI Based Leaf Disease Detection?
-          </h2>
-        </div>
         <div className="grid md:grid-cols-2 gap-6">
           {features.map(({ icon, title, desc }) => (
             <div key={title} className="card flex gap-4 hover:shadow-2xl hover:border-emerald-400 transition-all bg-emerald-50/85 border-emerald-200/60">
