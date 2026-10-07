@@ -10,11 +10,20 @@ const features = [
 ];
 
 export default function Home() {
+  const alert = localStorage.getItem("admin_farmer_alert") || "⚠️ Seasonal Advisory: High humidity observed. Inspect Tomato and Potato crops for Early/Late Blight.";
+
   return (
     <div className="space-y-0">
       {/* Hero */}
       <section className="relative overflow-hidden bg-black/35 backdrop-blur-md border-b border-white/20 text-white shadow-xl">
-        <div className="relative max-w-5xl mx-auto px-6 py-20 text-center">
+        <div className="relative max-w-5xl mx-auto px-6 py-16 text-center">
+          {alert && (
+            <div className="mb-4 inline-flex items-center gap-2 bg-amber-500/25 border border-amber-400/40 text-amber-200 px-4 py-1.5 rounded-full text-xs font-bold shadow-md">
+              <span className="w-2 h-2 rounded-full bg-amber-400 animate-ping shrink-0" />
+              <span>{alert}</span>
+            </div>
+          )}
+          <br />
           <div className="inline-flex items-center gap-2 bg-black/40 backdrop-blur-md border border-white/30 px-5 py-2 rounded-full text-sm font-semibold mb-6 shadow-sm">
             🌾 "Agriculture is the Backbone of Our Nation — Healthy Crops, Wealthy Life"
           </div>

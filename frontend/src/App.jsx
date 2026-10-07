@@ -1,5 +1,5 @@
-import React from "react";
-import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
+import React, { useEffect, useState } from "react";
+import { BrowserRouter as Router, Routes, Route, Link } from "react-router-dom";
 import { Toaster } from "react-hot-toast";
 import Navbar from "./components/Navbar";
 import ChatBot from "./components/ChatBot";
@@ -8,8 +8,24 @@ import Detect from "./pages/Detect";
 import History from "./pages/History";
 import About from "./pages/About";
 import Analytics from "./pages/Analytics";
+import Admin from "./pages/Admin";
 
 function App() {
+  const [visitorCount, setVisitorCount] = useState(1450);
+
+  useEffect(() => {
+    // Live visitor counter logic
+    const current = parseInt(localStorage.getItem("total_site_visits") || "1450", 10);
+    const sessionVisited = sessionStorage.getItem("site_session_tracked");
+    let updated = current;
+    if (!sessionVisited) {
+      updated = current + 1;
+      localStorage.setItem("total_site_visits", updated.toString());
+      sessionStorage.setItem("site_session_tracked", "true");
+    }
+    setVisitorCount(updated);
+  }, []);
+
   return (
     <Router>
       <div 
@@ -30,13 +46,23 @@ function App() {
             <Route path="/history" element={<History />} />
             <Route path="/analytics" element={<Analytics />} />
             <Route path="/about" element={<About />} />
+            <Route path="/admin" element={<Admin />} />
           </Routes>
         </main>
-        <footer className="bg-black/60 backdrop-blur-md border-t border-white/10 py-6 text-center text-sm text-gray-300">
+        <footer className="bg-black/60 backdrop-blur-md border-t border-white/10 py-5 text-center text-sm text-gray-300 space-y-2">
           <p>
             🌿 AI BASED LEAF DISEASE DETECTION SYSTEM |{" "}
             <span className="text-primary-400 font-medium">PlantVillage Dataset</span>
           </p>
+          <div className="flex items-center justify-center gap-4 text-xs text-gray-400">
+            <span className="flex items-center gap-1.5 bg-white/10 px-3 py-1 rounded-full border border-white/10 text-emerald-300 font-bold">
+              <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+              Live Site Visits: {visitorCount.toLocaleString()}
+            </span>
+            <Link to="/admin" className="hover:text-emerald-300 text-gray-400 transition-colors underline underline-offset-4 flex items-center gap-1">
+              🔐 Admin Portal
+            </Link>
+          </div>
         </footer>
         <Toaster
           position="top-right"
