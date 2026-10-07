@@ -262,11 +262,6 @@ export default function Admin() {
               />
             </div>
 
-            <div className="bg-emerald-100/70 border border-emerald-200 p-3 rounded-xl text-xs text-emerald-900">
-              <span className="font-bold">🔑 Authorized Credentials:</span>
-              <p className="mt-0.5">Username: <code className="bg-white/80 px-1 py-0.5 rounded font-bold">admin</code> | Password: <code className="bg-white/80 px-1 py-0.5 rounded font-bold">Venkat@15</code></p>
-            </div>
-
             <button
               type="submit"
               className="w-full py-3 px-4 bg-emerald-700 hover:bg-emerald-800 text-white font-black rounded-xl shadow-lg transition-transform active:scale-95 flex items-center justify-center gap-2 text-sm"
