@@ -121,12 +121,12 @@ export default function Admin() {
 
   const handleLogin = (e) => {
     e.preventDefault();
-    if (username === "admin" && password === "admin123") {
+    if (username === "admin" && password === "Venkat@15") {
       sessionStorage.setItem("admin_auth", "true");
       setIsAuthenticated(true);
       toast.success("Welcome, Administrator! Portal Unlocked.");
     } else {
-      toast.error("Invalid Credentials! Default is admin / admin123");
+      toast.error("Invalid Credentials! Please check username & password.");
     }
   };
 
@@ -263,8 +263,8 @@ export default function Admin() {
             </div>
 
             <div className="bg-emerald-100/70 border border-emerald-200 p-3 rounded-xl text-xs text-emerald-900">
-              <span className="font-bold">🔑 Review / Demo Credentials:</span>
-              <p className="mt-0.5">Username: <code className="bg-white/80 px-1 py-0.5 rounded font-bold">admin</code> | Password: <code className="bg-white/80 px-1 py-0.5 rounded font-bold">admin123</code></p>
+              <span className="font-bold">🔑 Authorized Credentials:</span>
+              <p className="mt-0.5">Username: <code className="bg-white/80 px-1 py-0.5 rounded font-bold">admin</code> | Password: <code className="bg-white/80 px-1 py-0.5 rounded font-bold">Venkat@15</code></p>
             </div>
 
             <button
