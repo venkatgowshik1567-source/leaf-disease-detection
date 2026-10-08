@@ -54,24 +54,6 @@ export default function Home() {
         </div>
       </section>
 
-      {/* Stats Bar */}
-      <section className="max-w-5xl mx-auto px-6 -mt-6 relative z-10">
-        <div className="bg-emerald-50/85 backdrop-blur-md rounded-2xl shadow-xl border border-emerald-300/50 p-6 grid grid-cols-2 md:grid-cols-4 gap-6 text-center">
-          {[
-            { value: "98.5%", label: "Accuracy", sub: "Validated on 54k+ leaves" },
-            { value: "50+",   label: "Disease Classes", sub: "Fungal, Bacterial & Viral" },
-            { value: "<2s",   label: "Inference Time", sub: "Ultra-fast Diagnosis" },
-            { value: "10+",   label: "Plant Species", sub: "Tomato, Potato, Grape & more" },
-          ].map(({ value, label, sub }) => (
-            <div key={label} className="p-2">
-              <p className="text-3xl font-extrabold text-emerald-800">{value}</p>
-              <p className="text-sm font-bold text-gray-800 mt-1">{label}</p>
-              <p className="text-xs text-emerald-700/80 mt-0.5">{sub}</p>
-            </div>
-          ))}
-        </div>
-      </section>
-
       {/* Features */}
       <section className="max-w-5xl mx-auto px-6 py-16">
         <div className="grid md:grid-cols-2 gap-6">
