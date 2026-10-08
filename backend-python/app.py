@@ -165,7 +165,7 @@ def handle_generic_error(e):
 
 # ─── Entry Point ──────────────────────────────────────────────────────────────
 if __name__ == "__main__":
-    port = int(os.getenv("FLASK_PORT", 8000))
+    port = int(os.getenv("PORT") or os.getenv("FLASK_PORT") or 8000)
     debug = os.getenv("FLASK_ENV", "development") == "development"
     logger.info(f"🌿  Starting LeafGuard ML API on port {port} (debug={debug})")
     app.run(host="0.0.0.0", port=port, debug=debug)
