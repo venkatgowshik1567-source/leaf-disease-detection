@@ -23,11 +23,13 @@ router.post("/", upload.single("image"), async (req, res, next) => {
     console.log(`[${requestId}] Received image: ${req.file.originalname} (${req.file.size} bytes)`);
 
     let geminiResult = null;
+    let geminiError = null;
     try {
       geminiResult = await analyzeLeaf(req.file.buffer, req.file.mimetype);
       console.log("Gemini Result:", geminiResult);
     } catch (gErr) {
-      console.warn("Gemini Vision AI note:", gErr?.message || gErr);
+      geminiError = gErr?.message || String(gErr);
+      console.warn("Gemini Vision AI error:", geminiError);
     }
 
     // Optional forward to Python ML API (non-blocking)
@@ -154,6 +156,7 @@ router.post("/", upload.single("image"), async (req, res, next) => {
         prevention: finalPrevention,
       },
       gemini: geminiResult,
+      gemini_error: geminiError,
       request_id: requestId,
       inference_ms: inferenceMs,
       processed_at: new Date().toISOString(),
