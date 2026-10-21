@@ -26,7 +26,9 @@ export default function ResultCard({ result }) {
           {cfg.icon}
           <div>
             <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Detected Plant / Leaf</p>
-            <h2 className="text-2xl font-extrabold text-gray-800">{result.plant_name} Leaf</h2>
+            <h2 className="text-2xl font-extrabold text-gray-800">
+              {result.plant_name?.toLowerCase().includes("leaf") ? result.plant_name : `${result.plant_name} Leaf`}
+            </h2>
           </div>
         </div>
         <div className={`px-3 py-1.5 rounded-full text-xs font-bold uppercase tracking-wide ${cfg.color} ${cfg.bg} border ${cfg.border}`}>

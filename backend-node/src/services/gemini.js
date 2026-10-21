@@ -1,8 +1,7 @@
 const { GoogleGenAI } = require("@google/genai");
 
-const ai = new GoogleGenAI({
-  apiKey: process.env.GEMINI_API_KEY,
-});
+const apiKey = (process.env.GEMINI_API_KEY || "").trim();
+const ai = new GoogleGenAI({ apiKey });
 
 /**
  * Analyzes a leaf image using Google Gemini 3.8 Flash Vision AI.
