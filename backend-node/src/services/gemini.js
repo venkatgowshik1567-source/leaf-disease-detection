@@ -1,6 +1,6 @@
 const { GoogleGenAI } = require("@google/genai");
 
-// Support multiple API keys (comma-separated) for rotation when quota runs out
+// Support multiple API keys (comma-separated) for rotation
 const apiKeys = (process.env.GEMINI_API_KEY || "")
   .split(",")
   .map((k) => k.trim())
@@ -8,9 +8,12 @@ const apiKeys = (process.env.GEMINI_API_KEY || "")
 
 console.log(`[Gemini] Loaded ${apiKeys.length} API key(s)`);
 
+// Priority list: gemini-3.5-flash-lite is fastest and rock solid without 503 spikes; gemini-3.8-flash as fallback
+const VISION_MODELS = ["gemini-3.5-flash-lite", "gemini-3.8-flash"];
+
 /**
- * Analyzes a leaf image using Google Gemini 3.8 Flash Vision AI.
- * Tries each API key in rotation. Skips retry on quota/auth errors.
+ * Analyzes a leaf image using Google Multimodal Vision AI.
+ * Tries the fastest, most reliable models and rotates API keys if needed.
  * @param {Buffer} imageBuffer
  * @param {string} mimeType
  */
@@ -43,19 +46,17 @@ Do not include markdown code fences or any other text outside the JSON.
 
   let lastError = null;
 
-  // Try each API key
   for (let keyIdx = 0; keyIdx < apiKeys.length; keyIdx++) {
     const currentKey = apiKeys[keyIdx];
     const ai = new GoogleGenAI({ apiKey: currentKey });
     const keyLabel = `Key#${keyIdx + 1}`;
 
-    // Up to 2 retries per key (only for transient errors)
-    for (let attempt = 1; attempt <= 2; attempt++) {
+    for (const modelName of VISION_MODELS) {
       try {
-        console.log(`[Gemini ${keyLabel} Attempt ${attempt}] Calling gemini-3.8-flash...`);
-        
+        console.log(`[Gemini ${keyLabel}] Calling ${modelName}...`);
+
         const response = await ai.models.generateContent({
-          model: "gemini-3.8-flash",
+          model: modelName,
           contents: [
             {
               inlineData: {
@@ -67,42 +68,38 @@ Do not include markdown code fences or any other text outside the JSON.
           ],
         });
 
-        const text = (response.text || "").trim();
-        const cleanText = text
-          .replace(/^```json\s*/i, "")
-          .replace(/^```\s*/i, "")
-          .replace(/\s*```$/i, "")
-          .trim();
+        const rawText = (response.text || "").trim();
+        // Extract json object even if wrapped in markdown
+        const jsonMatch = rawText.match(/\{[\s\S]*\}/);
+        if (!jsonMatch) {
+          throw new Error("Invalid non-JSON response from Gemini: " + rawText.slice(0, 100));
+        }
 
-        const result = JSON.parse(cleanText);
-        console.log(`[Gemini ${keyLabel}] SUCCESS: ${result.leaf_name} / ${result.disease_name}`);
+        const result = JSON.parse(jsonMatch[0]);
+        console.log(`[Gemini ${keyLabel} - ${modelName}] SUCCESS: ${result.leaf_name} | ${result.disease_name}`);
         return result;
       } catch (err) {
         lastError = err;
         const msg = err.message || String(err);
-        console.warn(`[Gemini ${keyLabel} Attempt ${attempt}] Error:`, msg);
+        console.warn(`[Gemini ${keyLabel} - ${modelName}] Warning:`, msg.slice(0, 150));
 
-        // If quota exceeded (429) or auth failed (401/403), skip to next key immediately
-        if (msg.includes("429") || msg.includes("quota") || msg.includes("RESOURCE_EXHAUSTED") ||
-            msg.includes("401") || msg.includes("403") || msg.includes("UNAUTHENTICATED") ||
-            msg.includes("PERMISSION_DENIED")) {
-          console.warn(`[Gemini ${keyLabel}] Quota/Auth error — trying next key...`);
-          break; // break inner loop, try next key
+        // If quota exceeded or auth failure, don't try other models on this key, move to next key
+        if (
+          msg.includes("429") ||
+          msg.includes("quota") ||
+          msg.includes("RESOURCE_EXHAUSTED") ||
+          msg.includes("401") ||
+          msg.includes("403") ||
+          msg.includes("UNAUTHENTICATED")
+        ) {
+          console.warn(`[Gemini ${keyLabel}] Quota/Auth issue on key, switching to next key...`);
+          break; // break models loop to try next key
         }
-
-        // For transient errors (500, 503, network), wait and retry
-        if (attempt < 2) {
-          await new Promise((resolve) => setTimeout(resolve, 1000 * attempt));
-        }
+        // If 503 or transient error, continue to next model in VISION_MODELS
       }
     }
   }
 
-  // All keys exhausted
-  const errMsg = lastError?.message || String(lastError);
-  if (errMsg.includes("429") || errMsg.includes("quota") || errMsg.includes("RESOURCE_EXHAUSTED")) {
-    throw new Error("QUOTA_EXHAUSTED: All Gemini API keys have exceeded their daily quota. Add a new key or wait for reset.");
-  }
   throw lastError;
 }
 
