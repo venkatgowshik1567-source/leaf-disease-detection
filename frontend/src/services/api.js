@@ -28,10 +28,13 @@ apiClient.interceptors.response.use(
  * @param {File} imageFile - The leaf image file
  * @returns {Promise<Object>}
  */
-export async function detectDisease(imageFile) {
+export async function detectDisease(imageFile, selectedCrop = "auto") {
   try {
     const formData = new FormData();
     formData.append("image", imageFile);
+    if (selectedCrop && selectedCrop !== "auto") {
+      formData.append("crop", selectedCrop);
+    }
 
     const result = await apiClient.post("/detect", formData, {
       headers: { "Content-Type": "multipart/form-data" },
@@ -40,7 +43,7 @@ export async function detectDisease(imageFile) {
   } catch (error) {
     console.warn("Backend server unreachable, engaging Smart Client-Side Agro Vision:", error?.message);
     // Graceful smart fallback ensuring 100% uptime for live demos
-    return await runClientDiagnosis(imageFile);
+    return await runClientDiagnosis(imageFile, selectedCrop);
   }
 }
 

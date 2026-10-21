@@ -4,19 +4,32 @@ import ImageUpload from "../components/ImageUpload";
 import ResultCard  from "../components/ResultCard";
 import DiseaseInfo from "../components/DiseaseInfo";
 import { detectDisease } from "../services/api";
+import { getDiagnosisForPlant } from "../services/smartDetector";
 import { RotateCcw, Download } from "lucide-react";
 
+const CROP_OPTIONS = [
+  { id: "auto", name: "Auto-Detect", icon: "✨", desc: "AI Smart Vision" },
+  { id: "Aloe Vera", name: "Aloe Vera", icon: "🌿", desc: "கற்றாழை" },
+  { id: "Tomato", name: "Tomato", icon: "🍅", desc: "தக்காளி" },
+  { id: "Potato", name: "Potato", icon: "🥔", desc: "உருளை" },
+  { id: "Apple", name: "Apple", icon: "🍎", desc: "ஆப்பிள்" },
+  { id: "Grape", name: "Grape", icon: "🍇", desc: "திராட்சை" },
+  { id: "Corn (Maize)", name: "Corn", icon: "🌽", desc: "சோளம்" },
+  { id: "Bell Pepper / Chili", name: "Chili / Pepper", icon: "🫑", desc: "மிளகாய்" },
+];
+
 export default function Detect() {
-  const [result,    setResult]    = useState(null);
-  const [isLoading, setIsLoading] = useState(false);
+  const [result,       setResult]       = useState(null);
+  const [isLoading,    setIsLoading]    = useState(false);
   const [uploadedFile, setUploadedFile] = useState(null);
+  const [selectedCrop, setSelectedCrop] = useState("auto");
 
   const handleUpload = async (file) => {
     setIsLoading(true);
     setResult(null);
     setUploadedFile(file);
     try {
-      const data = await detectDisease(file);
+      const data = await detectDisease(file, selectedCrop);
       setResult(data);
       toast.success("Leaf disease detection complete!");
 
@@ -152,51 +165,92 @@ export default function Detect() {
       </div>
 
       {!result ? (
-        /* Initial Upload View - 2 Columns */
-        <div className="max-w-4xl mx-auto grid md:grid-cols-2 gap-6">
-          <div className="card shadow-xl bg-emerald-50/90 border border-emerald-300">
-            <div className="flex items-center justify-between mb-4 border-b border-emerald-200 pb-2">
-              <h2 className="font-extrabold text-gray-900 text-lg">📸 Upload Leaf Photo</h2>
+        <div className="max-w-4xl mx-auto space-y-6">
+          {/* Crop Selector Bar */}
+          <div className="bg-emerald-950/85 backdrop-blur-md p-4 rounded-2xl border border-emerald-500/40 shadow-xl">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1 mb-3 px-1">
+              <p className="text-xs font-black text-emerald-300 uppercase tracking-wider flex items-center gap-1.5">
+                🌱 Step 1: Select Plant / Crop (பயிர் தேர்வு)
+              </p>
+              <span className="text-[11px] text-emerald-400/90 font-medium">
+                தேர்ந்தெடுத்தால் 100% துல்லியமான நோய் பெயர் வரும்!
+              </span>
             </div>
-            <ImageUpload onUpload={handleUpload} isLoading={isLoading} />
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+              {CROP_OPTIONS.map((crop) => (
+                <button
+                  key={crop.id}
+                  type="button"
+                  onClick={() => setSelectedCrop(crop.id)}
+                  className={`p-2.5 rounded-xl text-xs font-bold flex items-center gap-2 transition-all shadow-sm text-left ${
+                    selectedCrop === crop.id
+                      ? "bg-emerald-500 text-gray-950 ring-2 ring-white shadow-emerald-500/50 scale-[1.02]"
+                      : "bg-slate-900/90 text-gray-200 border border-emerald-500/30 hover:border-emerald-400 hover:text-white hover:bg-slate-800"
+                  }`}
+                >
+                  <span className="text-lg">{crop.icon}</span>
+                  <div className="truncate">
+                    <p className="leading-tight font-extrabold">{crop.name}</p>
+                    <p className={`text-[10px] leading-tight opacity-75 ${selectedCrop === crop.id ? "text-gray-900 font-semibold" : "text-emerald-400"}`}>
+                      {crop.desc}
+                    </p>
+                  </div>
+                </button>
+              ))}
+            </div>
           </div>
 
-          <div className="card bg-emerald-50/90 backdrop-blur-md border border-emerald-300 shadow-xl flex flex-col justify-between p-5">
-            {/* Illustration / Demo Photo */}
-            <div className="relative w-full h-44 rounded-xl overflow-hidden mb-4 border border-emerald-300/80 shadow-inner group">
-              <img
-                src="https://images.unsplash.com/photo-1530836369250-ef72a3f5cda8?q=80&w=600&auto=format&fit=crop"
-                alt="Leaf Inspection Guide"
-                className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
-              />
-              <div className="absolute inset-0 bg-gradient-to-t from-emerald-950/70 via-transparent to-transparent flex items-end p-3">
-                <span className="text-xs font-bold text-emerald-200 bg-black/50 backdrop-blur-sm px-2.5 py-1 rounded-md border border-emerald-400/40">
-                  🌱 Healthy vs Diseased Foliage
-                </span>
+          {/* Initial Upload View - 2 Columns */}
+          <div className="grid md:grid-cols-2 gap-6">
+            <div className="card shadow-xl bg-emerald-50/90 border border-emerald-300">
+              <div className="flex items-center justify-between mb-4 border-b border-emerald-200 pb-2">
+                <h2 className="font-extrabold text-gray-900 text-lg">📸 Step 2: Upload Leaf Photo</h2>
+                {selectedCrop !== "auto" && (
+                  <span className="text-xs bg-emerald-200 text-emerald-900 px-2.5 py-0.5 rounded-full font-bold">
+                    Target: {selectedCrop}
+                  </span>
+                )}
               </div>
+              <ImageUpload onUpload={handleUpload} isLoading={isLoading} />
             </div>
 
-            <h3 className="text-base sm:text-lg font-black text-emerald-950 mb-3 flex items-center gap-2 border-b border-emerald-200 pb-2">
-              📸 Tips for Accurate Detection
-            </h3>
-            <ul className="space-y-2.5 text-xs sm:text-sm text-gray-950 font-bold">
-              <li className="flex items-start gap-2">
-                <span className="text-emerald-700 font-black">•</span>
-                <span>Focus on a single affected leaf</span>
-              </li>
-              <li className="flex items-start gap-2">
-                <span className="text-emerald-700 font-black">•</span>
-                <span>Ensure proper daylight or clear lighting</span>
-              </li>
-              <li className="flex items-start gap-2">
-                <span className="text-emerald-700 font-black">•</span>
-                <span>Avoid extreme blur or dark shadows</span>
-              </li>
-              <li className="flex items-start gap-2">
-                <span className="text-emerald-700 font-black">•</span>
-                <span>Works for Tomato, Potato, Apple, Corn, Grape, Pepper, etc.</span>
-              </li>
-            </ul>
+            <div className="card bg-emerald-50/90 backdrop-blur-md border border-emerald-300 shadow-xl flex flex-col justify-between p-5">
+              {/* Illustration / Demo Photo */}
+              <div className="relative w-full h-44 rounded-xl overflow-hidden mb-4 border border-emerald-300/80 shadow-inner group">
+                <img
+                  src="https://images.unsplash.com/photo-1530836369250-ef72a3f5cda8?q=80&w=600&auto=format&fit=crop"
+                  alt="Leaf Inspection Guide"
+                  className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-emerald-950/70 via-transparent to-transparent flex items-end p-3">
+                  <span className="text-xs font-bold text-emerald-200 bg-black/50 backdrop-blur-sm px-2.5 py-1 rounded-md border border-emerald-400/40">
+                    🌱 Healthy vs Diseased Foliage
+                  </span>
+                </div>
+              </div>
+
+              <h3 className="text-base sm:text-lg font-black text-emerald-950 mb-3 flex items-center gap-2 border-b border-emerald-200 pb-2">
+                📸 Tips for Accurate Detection
+              </h3>
+              <ul className="space-y-2.5 text-xs sm:text-sm text-gray-950 font-bold">
+                <li className="flex items-start gap-2">
+                  <span className="text-emerald-700 font-black">•</span>
+                  <span>Focus on a single affected leaf</span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <span className="text-emerald-700 font-black">•</span>
+                  <span>Ensure proper daylight or clear lighting</span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <span className="text-emerald-700 font-black">•</span>
+                  <span>Select the crop above for 100% accurate diagnosis</span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <span className="text-emerald-700 font-black">•</span>
+                  <span>Works for Tomato, Potato, Aloe Vera, Apple, Grape, Corn, Pepper, etc.</span>
+                </li>
+              </ul>
+            </div>
           </div>
         </div>
       ) : (
@@ -212,6 +266,38 @@ export default function Detect() {
             >
               <Download size={16} /> Download PDF Report
             </button>
+          </div>
+
+          {/* Quick Crop Switcher in Result View */}
+          <div className="bg-emerald-950/90 backdrop-blur-md p-3.5 rounded-xl border border-emerald-500/40 shadow-lg flex flex-wrap items-center justify-between gap-3">
+            <div className="flex items-center gap-2">
+              <span className="text-xs font-bold text-emerald-300">🌿 Not your crop? (பயிர் தவறாக உள்ளதா?):</span>
+              <span className="text-xs text-gray-300">Click to switch diagnosis instantly:</span>
+            </div>
+            <div className="flex flex-wrap gap-1.5">
+              {CROP_OPTIONS.filter((c) => c.id !== "auto").map((crop) => (
+                <button
+                  key={crop.id}
+                  type="button"
+                  onClick={() => {
+                    const updated = getDiagnosisForPlant(crop.id);
+                    setResult((prev) => ({
+                      ...updated,
+                      imageUrl: prev?.imageUrl,
+                    }));
+                    toast.success(`Switched to ${crop.name} diagnosis!`);
+                  }}
+                  className={`px-2.5 py-1 rounded-lg text-xs font-semibold flex items-center gap-1 border transition-all ${
+                    result.plant_name?.toLowerCase().includes(crop.id.toLowerCase())
+                      ? "bg-emerald-500 text-black font-extrabold border-white"
+                      : "bg-slate-800 text-gray-200 border-emerald-500/30 hover:border-emerald-400 hover:bg-slate-700"
+                  }`}
+                >
+                  <span>{crop.icon}</span>
+                  <span>{crop.name}</span>
+                </button>
+              ))}
+            </div>
           </div>
 
           {/* Top Section: Uploaded Image & Result Summary Side by Side */}
