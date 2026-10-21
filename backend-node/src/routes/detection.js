@@ -21,12 +21,14 @@ router.post("/", upload.single("image"), async (req, res, next) => {
 
     const requestId = uuidv4();
     console.log(`[${requestId}] Received image: ${req.file.originalname} (${req.file.size} bytes)`);
-    const geminiResult = await analyzeLeaf(
-  req.file.buffer,
-  req.file.mimetype
-);
 
-console.log("Gemini Result:", geminiResult);
+    let geminiResult = null;
+    try {
+      geminiResult = await analyzeLeaf(req.file.buffer, req.file.mimetype);
+      console.log("Gemini Result:", geminiResult);
+    } catch (gErr) {
+      console.warn("Gemini Vision AI note:", gErr?.message || gErr);
+    }
 
     // Forward image to Python ML API
     const formData = new FormData();
@@ -52,22 +54,18 @@ console.log("Gemini Result:", geminiResult);
     console.log(`[${requestId}] Prediction: ${result.disease_name} (${Math.round(result.confidence * 100)}%) in ${inferenceMs}ms`);
 
     res.json({
-  ...result,
-
-  // Gemini is the primary result
-  leaf_name: geminiResult.leaf_name,
-  plant_name: geminiResult.leaf_name,
-  disease_name: geminiResult.disease_name,
-  symptoms: geminiResult.symptoms,
-  treatment: geminiResult.treatment,
-  prevention: geminiResult.prevention,
-
-  gemini: geminiResult,
-
-  request_id: requestId,
-  inference_ms: inferenceMs,
-  processed_at: new Date().toISOString(),
-});
+      ...result,
+      leaf_name: geminiResult?.leaf_name || result.plant_name,
+      plant_name: geminiResult?.leaf_name || result.plant_name,
+      disease_name: geminiResult?.disease_name || result.disease_name,
+      symptoms: geminiResult?.symptoms || result.disease_info?.symptoms,
+      treatment: geminiResult?.treatment || result.disease_info?.treatment,
+      prevention: geminiResult?.prevention || result.disease_info?.prevention,
+      gemini: geminiResult,
+      request_id: requestId,
+      inference_ms: inferenceMs,
+      processed_at: new Date().toISOString(),
+    });
   } catch (err) {
     if (err.code === "ECONNREFUSED") {
       return res.status(503).json({

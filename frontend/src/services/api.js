@@ -6,7 +6,7 @@ const API_BASE = process.env.REACT_APP_API_URL || "http://localhost:5000/api";
 
 const apiClient = axios.create({
   baseURL: API_BASE,
-  timeout: 4000, // 4-second timeout for quick fallback if backend is offline
+  timeout: 60000, // 60-second timeout to allow Render cloud backend to process and cold-start
 });
 
 // Request interceptor for logging
