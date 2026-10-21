@@ -1,12 +1,11 @@
 import axios from "axios";
-import { runClientDiagnosis } from "./smartDetector";
 
 // Node.js API Gateway base URL
 const API_BASE = process.env.REACT_APP_API_URL || "http://localhost:5000/api";
 
 const apiClient = axios.create({
   baseURL: API_BASE,
-  timeout: 60000, // 60-second timeout to allow Render cloud backend to process and cold-start
+  timeout: 60000, // 60-second timeout for cloud AI inference
 });
 
 // Request interceptor for logging
@@ -15,36 +14,30 @@ apiClient.interceptors.request.use((config) => {
   return config;
 });
 
-// Response interceptor
+// Response interceptor for error normalization
 apiClient.interceptors.response.use(
   (response) => response.data,
-  (error) => Promise.reject(error)
+  (error) => {
+    const message =
+      error.response?.data?.error ||
+      error.response?.data?.message ||
+      (error.code === "ECONNABORTED" ? "AI analysis timed out. Please try again." : "Network error. Is the AI server running?");
+    return Promise.reject(new Error(message));
+  }
 );
 
 /**
- * Sends a leaf image to the Node.js API gateway for disease detection.
- * If the backend is offline or unreachable (e.g. on Vercel without cloud server),
- * it seamlessly switches to the Smart Client-Side Agro-AI Diagnosis Engine.
+ * Sends a leaf image to the Node.js API gateway for multimodal AI disease detection.
  * @param {File} imageFile - The leaf image file
  * @returns {Promise<Object>}
  */
-export async function detectDisease(imageFile, selectedCrop = "auto") {
-  try {
-    const formData = new FormData();
-    formData.append("image", imageFile);
-    if (selectedCrop && selectedCrop !== "auto") {
-      formData.append("crop", selectedCrop);
-    }
+export async function detectDisease(imageFile) {
+  const formData = new FormData();
+  formData.append("image", imageFile);
 
-    const result = await apiClient.post("/detect", formData, {
-      headers: { "Content-Type": "multipart/form-data" },
-    });
-    return result;
-  } catch (error) {
-    console.warn("Backend server unreachable, engaging Smart Client-Side Agro Vision:", error?.message);
-    // Graceful smart fallback ensuring 100% uptime for live demos
-    return await runClientDiagnosis(imageFile, selectedCrop);
-  }
+  return apiClient.post("/detect", formData, {
+    headers: { "Content-Type": "multipart/form-data" },
+  });
 }
 
 /**
@@ -55,7 +48,6 @@ export async function getHistory(limit = 20) {
   try {
     return await apiClient.get(`/history?limit=${limit}`);
   } catch {
-    // Return local storage history fallback
     return JSON.parse(localStorage.getItem("detectionHistory") || "[]");
   }
 }
@@ -64,9 +56,5 @@ export async function getHistory(limit = 20) {
  * Health check endpoint
  */
 export async function healthCheck() {
-  try {
-    return await apiClient.get("/health");
-  } catch {
-    return { status: "online", mode: "smart_client_vision" };
-  }
+  return apiClient.get("/health");
 }
